@@ -51,7 +51,19 @@ class Proxies(object):
         available = list(self.unchecked | self.good)
         if not available:
             return None
-        return random.choice(available)
+
+        if len(self.good) >= 10:
+            k = max(0, (len(available) - len(self.good)) // len(self.good))
+            proxy = random.choice(available + list(self.good)*k)
+        else:
+            proxy = random.choice(available)
+
+        if not proxy in self.good:
+            logger.info("Getting an unchecked proxy: {}".format(proxy))
+
+        self.proxies[proxy].count+=1
+
+        return proxy
 
     def get_proxy(self, proxy_address):
         """
@@ -144,6 +156,7 @@ class ProxyState(object):
     failed_attempts = attr.ib(default=0)
     next_check = attr.ib(default=None)
     backoff_time = attr.ib(default=None)  # for debugging
+    count = attr.ib(default=0)
 
 
 def exp_backoff(attempt, cap=3600, base=300):
@@ -158,4 +171,7 @@ def exp_backoff(attempt, cap=3600, base=300):
 
 def exp_backoff_full_jitter(*args, **kwargs):
     """ Exponential backoff time with Full Jitter """
-    return random.uniform(0, exp_backoff(*args, **kwargs))
+    backoff_secs = random.uniform(kwargs['base'], exp_backoff(*args, **kwargs))
+    # TODO good proxies that fail should have shorter backoffs
+
+    return backoff_secs

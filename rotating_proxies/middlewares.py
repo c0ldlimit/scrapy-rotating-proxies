@@ -16,7 +16,7 @@ from .expire import Proxies, exp_backoff_full_jitter
 
 logger = logging.getLogger(__name__)
 
-
+# TODO expose a good proxies path and preload good proxies between runs
 class RotatingProxyMiddleware(object):
     """
     Scrapy downloader middleware which choses a random proxy for each request.
