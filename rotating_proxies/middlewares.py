@@ -129,7 +129,13 @@ class RotatingProxyMiddleware(object):
     def process_request(self, request, spider):
         if 'proxy' in request.meta and not request.meta.get('_rotating_proxy'):
             return
-        proxy = self.proxies.get_random()
+
+        if request.meta.get('reuse_proxy', False):
+            logger.info(f"REUSING PROXY {request.meta['proxy']}")
+            proxy = request.meta['proxy']
+        else:
+            proxy = self.proxies.get_random()
+
         if not proxy:
             if self.stop_if_no_proxies:
                 raise CloseSpider("no_proxies")
@@ -192,9 +198,10 @@ class RotatingProxyMiddleware(object):
             retryreq = request.copy()
             retryreq.meta['proxy_retry_times'] = retries
             retryreq.dont_filter = True
+            retryreq.meta['reuse_proxy'] = False
             return retryreq
         else:
-            logger.debug("Gave up retrying %(request)s (failed %(retries)d "
+            logger.info("Gave up retrying %(request)s (failed %(retries)d "
                          "times with different proxies)",
                          {'request': request, 'retries': retries},
                          extra={'spider': spider})

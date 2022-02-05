@@ -59,7 +59,7 @@ class Proxies(object):
             proxy = random.choice(available)
 
         if not proxy in self.good:
-            logger.info("Getting an unchecked proxy: {}".format(proxy))
+            logger.debug("Getting an unchecked proxy: {}".format(proxy))
 
         self.proxies[proxy].count+=1
 
